@@ -25,7 +25,8 @@
 # Некоторые примеры для запуска из коммандной строки
 Автоматически зпустить Бейсик программу
 
-mk85m.exe -asmfn "helloworld.asm" -romfn "helloworld.rom"
+Компиляцтя и запуск Ассемблер программы "Hello word!"
+- mk85m.exe -asmfn "helloworld.asm" -romfn "helloworld.rom"
 
 
 
