@@ -28,10 +28,13 @@
 # Примеры запуска из коммандной строки
 Автоматически зпустить Бейсик программу:
 - mk85m.exe -basfn "runner.bas" -ramfn "runner.ram" -ar 0
+- 
 Компиляция и запуск Ассемблер программы "Hello word!":
 - mk85m.exe -asmfn "helloworld.asm" -romfn "helloworld.rom"
+- 
 Компиляция и запуск исходгого кода микрокомпьютера "Электроника МК85":
 - mk85m.exe -asmfn "mk85.asm" -romfn "mk85.rom"
+- 
 "Тихая" компиляция исходгого кода микрокомпьютера "Электроника МК85":
 - mk85m.exe -asmfn "mk85.asm" -romfn "mk85.rom" -cm 2
 
