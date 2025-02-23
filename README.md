@@ -23,7 +23,9 @@
 - -help, -h Вызов справки.
 
 # Некоторые примеры для запуска из коммандной строки
+
 Автоматически зпустить Бейсик программу
+- mk85m.exe -basfn "runner.bas" -ramfn "runner.ram" -ar 0
 
 Компиляцтя и запуск Ассемблер программы "Hello word!"
 - mk85m.exe -asmfn "helloworld.asm" -romfn "helloworld.rom"
