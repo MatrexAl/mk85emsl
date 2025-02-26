@@ -1,7 +1,7 @@
 object DebugForm: TDebugForm
-  Left = 676
+  Left = 323
   Height = 486
-  Top = 164
+  Top = 144
   Width = 895
   Anchors = [akTop, akRight]
   Caption = 'Debug Window'
@@ -275,7 +275,7 @@ object DebugForm: TDebugForm
       ShowHint = True
     end
     object ToolButton2: TToolButton
-      Left = 88
+      Left = 98
       Top = 0
       Action = aAnimate
       ParentShowHint = False
@@ -302,37 +302,38 @@ object DebugForm: TDebugForm
       Action = aBreakPoint
       ParentShowHint = False
       ShowHint = True
+      Style = tbsButtonDrop
     end
     object ToolButton6: TToolButton
-      Left = 112
+      Left = 122
       Height = 23
       Top = 0
       Caption = 'ToolButton6'
       Style = tbsSeparator
     end
     object ToolButton4: TToolButton
-      Left = 120
+      Left = 130
       Top = 0
       Action = aByteWordToogle
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton7: TToolButton
-      Left = 80
+      Left = 90
       Height = 23
       Top = 0
       Caption = 'ToolButton7'
       Style = tbsSeparator
     end
     object ToolButton8: TToolButton
-      Left = 152
+      Left = 162
       Top = 0
       Action = aCopyAddr
       ParentShowHint = False
       ShowHint = True
     end
     object ToolButton9: TToolButton
-      Left = 144
+      Left = 154
       Height = 23
       Top = 0
       Caption = 'ToolButton9'
@@ -401,6 +402,9 @@ object DebugForm: TDebugForm
       ImageIndex = 4
       OnExecute = aByteWordToogleExecute
     end
+    object aAddBreakPoint: TAction
+      Caption = 'Add...'
+    end
   end
   object ilEnabledButtonIcon: TImageList
     Left = 376
@@ -450,6 +454,13 @@ object DebugForm: TDebugForm
     end
     object MenuItem6: TMenuItem
       Action = aCopyAddr
+    end
+  end
+  object pmBreakPoint: TPopupMenu
+    Left = 257
+    Top = 15
+    object MenuItem7: TMenuItem
+      Action = aAddBreakPoint
     end
   end
 end

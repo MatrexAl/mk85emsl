@@ -15,6 +15,7 @@ type
     aAnimate: TAction;
     aBreakPoint: TAction;
     aByteWordToogle: TAction;
+    aAddBreakPoint: TAction;
     aNumberOfStep: TAction;
     aStep: TAction;
     alActionList: TActionList;
@@ -34,6 +35,8 @@ type
     MenuItem4: TMenuItem;
     MenuItem5: TMenuItem;
     MenuItem6: TMenuItem;
+    MenuItem7: TMenuItem;
+    pmBreakPoint: TPopupMenu;
     Separator3: TMenuItem;
     Separator2: TMenuItem;
     Separator1: TMenuItem;
