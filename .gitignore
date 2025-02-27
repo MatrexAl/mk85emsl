@@ -1,3 +1,5 @@
 /lib
 bin/mk85m.dbg
 bin/ram.bin
+bin/mk85.rom
+bin/ram.bin
