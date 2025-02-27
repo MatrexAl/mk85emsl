@@ -1,0 +1,66 @@
+object BreakPointDialogForm: TBreakPointDialogForm
+  Left = 622
+  Height = 161
+  Top = 353
+  Width = 472
+  BorderStyle = bsDialog
+  Caption = 'BreakPoint'
+  ClientHeight = 161
+  ClientWidth = 472
+  OnShow = FormShow
+  LCLVersion = '2.2.6.0'
+  object leAddres: TLabeledEdit
+    Left = 104
+    Height = 23
+    Top = 24
+    Width = 352
+    EditLabel.Height = 15
+    EditLabel.Width = 68
+    EditLabel.Caption = 'Addres, HEX:'
+    EditLabel.ParentColor = False
+    LabelPosition = lpLeft
+    TabOrder = 0
+    Text = 'leAddres'
+  end
+  object leRem: TLabeledEdit
+    Left = 104
+    Height = 23
+    Top = 56
+    Width = 352
+    Anchors = [akTop, akLeft, akRight]
+    EditLabel.Height = 15
+    EditLabel.Width = 63
+    EditLabel.Caption = 'Description:'
+    EditLabel.ParentColor = False
+    LabelPosition = lpLeft
+    TabOrder = 1
+    Text = 'leRem'
+  end
+  object Button1: TButton
+    Left = 296
+    Height = 25
+    Top = 121
+    Width = 75
+    Anchors = [akRight, akBottom]
+    Caption = 'Ok'
+    OnClick = Button1Click
+    TabOrder = 2
+  end
+  object Button2: TButton
+    Left = 381
+    Height = 25
+    Top = 121
+    Width = 75
+    Anchors = [akRight, akBottom]
+    Caption = 'Cancel'
+    OnClick = Button2Click
+    TabOrder = 3
+  end
+  object Bevel1: TBevel
+    Left = 16
+    Height = 10
+    Top = 104
+    Width = 442
+    Shape = bsTopLine
+  end
+end

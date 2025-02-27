@@ -776,7 +776,7 @@ begin
   CpuStop := False;
   CpuDelay := 0;
   CpuSteps := -1;
-  BreakPoint := -1;
+
   DebugForm.Rem:=a2r.Rem; // К дебагеру подключим табице примечаний
 
   UploadResource(); // Загрузим ресурсы
@@ -1285,8 +1285,6 @@ begin
     Exit;
   end {if};
 
-
-
   i := 0;
   while i < CpuSpeed do
   begin
@@ -1301,7 +1299,7 @@ begin
         break;
       end {if};
     end {if};
-    if (BreakPoint >= 0) and (BreakPoint = ptrw(@reg[R7])^) then
+    if  DebugForm.InBreakPoint(ptrw(@reg[R7])^)  then
     begin
       DebugForm.Show;
       break;

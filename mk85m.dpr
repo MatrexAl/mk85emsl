@@ -11,7 +11,7 @@ uses
   Numbers in 'numbers.pas',
   Debug in 'debug.pas' {DebugForm},
   Pdp11dis in 'pdp11dis.pas',
-  Keyboard in 'keyboard.pas', bas2ram, proc, asm2rom;
+  Keyboard in 'keyboard.pas', bas2ram, proc, asm2rom, BrakPointDialog;
 
 {$R *.res}
 
@@ -19,5 +19,6 @@ begin
   Application.Initialize;
   Application.CreateForm(TMainForm, MainForm);
   Application.CreateForm(TDebugForm, DebugForm);
+  Application.CreateForm(TBreakPointDialogForm, BreakPointDialogForm);
   Application.Run;
 end.
