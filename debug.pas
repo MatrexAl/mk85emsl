@@ -4,7 +4,11 @@ interface
 
 uses
   SysUtils, Classes, Graphics, Controls, Forms, Dialogs, StdCtrls, ExtCtrls,
-  IniFiles, LCLType, Buttons, Clipbrd, ActnList, ComCtrls, Menus, asm2Rom;
+  IniFiles, LCLType, Buttons, Clipbrd, ActnList, ComCtrls, Menus, Grids,
+  asm2Rom, Generics.Collections, BrakPointDialog;
+
+type
+  TBreakPointDictionary = specialize TDictionary<word, string>; {Таблица точек останова и примечаний к ним}
 
 type
 
@@ -13,9 +17,11 @@ type
   TDebugForm = class(TForm)
     aCopyAddr: TAction;
     aAnimate: TAction;
-    aBreakPoint: TAction;
     aByteWordToogle: TAction;
     aAddBreakPoint: TAction;
+    aEditBreakPoint: TAction;
+    aDeleteBreakPoint: TAction;
+    aRunForBreakPoint: TAction;
     aNumberOfStep: TAction;
     aStep: TAction;
     alActionList: TActionList;
@@ -24,19 +30,25 @@ type
     cbDisassemply: TGroupBox;
     cbRegisters: TGroupBox;
     gbBinEditor: TGroupBox;
+    GroupBox1: TGroupBox;
     ilEnabledButtonIcon: TImageList;
     ListPanel: TPanel;
     ListPaintBox: TPaintBox;
     ListScrollBar: TScrollBar;
     ListEdit: TEdit;
+    lwBreakPoint: TListView;
     MenuItem1: TMenuItem;
+    MenuItem10: TMenuItem;
+    Separator4: TMenuItem;
     MenuItem2: TMenuItem;
     MenuItem3: TMenuItem;
     MenuItem4: TMenuItem;
     MenuItem5: TMenuItem;
     MenuItem6: TMenuItem;
     MenuItem7: TMenuItem;
-    pmBreakPoint: TPopupMenu;
+    MenuItem8: TMenuItem;
+    MenuItem9: TMenuItem;
+    ppBreakPoint: TPopupMenu;
     Separator3: TMenuItem;
     Separator2: TMenuItem;
     Separator1: TMenuItem;
@@ -56,6 +68,8 @@ type
     AutoRunTimer: TTimer;
     ToolBar1: TToolBar;
     ToolButton1: TToolButton;
+    ToolButton10: TToolButton;
+    ToolButton11: TToolButton;
     ToolButton2: TToolButton;
     ToolButton3: TToolButton;
     ToolButton4: TToolButton;
@@ -68,13 +82,21 @@ type
     ToolButton9: TToolButton;
 
     { DISASSEMBLY BOX EVENTS }
+    procedure aAddBreakPointExecute(Sender: TObject);
     procedure aAnimateExecute(Sender: TObject);
-    procedure aBreakPointExecute(Sender: TObject);
+    procedure aDeleteBreakPointExecute(Sender: TObject);
+    procedure aEditBreakPointExecute(Sender: TObject);
+    procedure FormResize(Sender: TObject);
+    procedure lwBreakPointDblClick(Sender: TObject);
+    procedure ppBreakPointPopup(Sender: TObject);
+    procedure RefreshBreakPointList;
     procedure aByteWordToogleExecute(Sender: TObject);
     procedure aCopyAddrExecute(Sender: TObject);
     procedure aNumberOfStepExecute(Sender: TObject);
+    procedure aRunForBreakPointExecute(Sender: TObject);
     procedure aStepExecute(Sender: TObject);
-    procedure btAutoRunMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: integer);
+    procedure SaveBreakPoint;
+    procedure DebugDestroy(Sender: TObject);
     procedure ListPanelClick(Sender: TObject);
     procedure ListBoxScroll(Sender: TObject; ScrollCode: TScrollCode; var ScrollPos: integer);
     procedure ListPaintBoxMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: integer);
@@ -98,16 +120,11 @@ type
     procedure BinEditKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
     procedure BinEditChange(Sender: TObject);
     procedure BinPaintBoxPaint(Sender: TObject);
-    procedure BinRadioButtonClick(Sender: TObject);
 
     { MACHINE CODE EXECUTION CONTROL EVENTS }
-    procedure StepPanelClick(Sender: TObject);
-    procedure StepButtonClick(Sender: TObject);
     procedure AutoRunTimerTimer(Sender: TObject);
     procedure TracePanelClick(Sender: TObject);
     procedure BpPanelClick(Sender: TObject);
-    procedure BpButtonClick(Sender: TObject);
-    procedure BpEditChange(Sender: TObject);
 
     { GENERAL FORM EVENTS }
     procedure DebugCreate(Sender: TObject);
@@ -117,15 +134,20 @@ type
   private
     aOldFlag: array [0..4] of string;
     aOldReg: array [0..8] of string;
+    fBreakPoint: TBreakPointDictionary;
+    procedure AddEdBreakPoint;
     function GetRem(const addr: integer): string;
-    function LoadBreakPoint: string;
+    function GetRemBreakPoint(const addr: integer): string;
+    function GetSectionForBreakPoint: string;
     function LoadNumnerOfSteps: integer;
-    procedure SaveBreakPoint(const i: string);
+    procedure LoadreakPoint;
     procedure SaveNumnerOfSteps(const i: integer);
+    procedure SetEnablede;
     { Private declarations }
   public
     Autorun: boolean;
     Rem: TRemDictionary;
+    function InBreakPoint(const v_addr: word): boolean;
     { Public declarations }
   end;
 
@@ -304,15 +326,16 @@ begin
 end;
 
 
-
-procedure TDebugForm.btAutoRunMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: integer);
+procedure TDebugForm.DebugDestroy(Sender: TObject);
 begin
-
+  SaveBreakPoint;
+  FreeAndNil(fBreakPoint);
 end;
 
 procedure TDebugForm.aCopyAddrExecute(Sender: TObject);
 begin
   Clipboard.AsText := OctStr(ListAddr, 6);
+  SetEnablede;
 end;
 
 
@@ -335,26 +358,6 @@ begin
 end;
 
 
-
-function TDebugForm.LoadBreakPoint: string;
-var
-  IniMK: TIniFile;
-begin
-  IniMK := TIniFile.Create(ExpandFileName(IniName));
-  Result := IniMK.ReadString('Debugger', 'BreakPoint', '0000');
-  FreeAndNil(IniMK);
-end;
-
-procedure TDebugForm.SaveBreakPoint(const i: string);
-var
-  IniMK: TIniFile;
-begin
-  IniMK := TIniFile.Create(ExpandFileName(IniName));
-  IniMK.WriteString('Debugger', 'BreakPoint', i);
-  FreeAndNil(IniMK);
-end;
-
-
 procedure TDebugForm.aNumberOfStepExecute(Sender: TObject);
 var
   i: integer;
@@ -367,13 +370,22 @@ begin
     SaveNumnerOfSteps(i);
     Unselect;
     CloseEdit;
+    SetEnablede;
     if i > 0 then
     begin
-      BreakPoint := -1;
       CpuSteps := i;
       Hide;
     end {if};
   end;
+end;
+
+procedure TDebugForm.aRunForBreakPointExecute(Sender: TObject);
+begin
+  Unselect;
+  CloseEdit;
+  CpuSteps := -1;
+  SetEnablede;
+  Hide;
 end;
 
 procedure TDebugForm.aAnimateExecute(Sender: TObject);
@@ -381,26 +393,102 @@ begin
   autorun := not autorun;
   aAnimate.Checked := autorun;
   AutoRunTimerTimer(Sender);
+  SetEnablede;
 end;
 
-procedure TDebugForm.aBreakPointExecute(Sender: TObject);
+
+
+procedure TDebugForm.aEditBreakPointExecute(Sender: TObject);
+var
+  iSel: integer;
+  addr: word;
+begin
+  Unselect;
+  CloseEdit;
+  if lwBreakPoint.SelCount = 1 then
+  begin
+    iSel := lwBreakPoint.Selected.Index;
+    addr := StrToInt('$' + lwBreakPoint.Items[isel].Caption);
+    BreakPointDialogForm.leAddres.Text := inttohex(addr, 4);
+    BreakPointDialogForm.leRem.Text := GetRemBreakPoint(addr);
+    AddEdBreakPoint();
+  end;
+  SetEnablede;
+end;
+
+procedure TDebugForm.aDeleteBreakPointExecute(Sender: TObject);
+var
+  iSel: integer;
+  addr: word;
+begin
+  Unselect;
+  CloseEdit;
+  if lwBreakPoint.SelCount = 1 then
+  begin
+    iSel := lwBreakPoint.Selected.Index;
+    addr := StrToInt('$' + lwBreakPoint.Items[isel].Caption);
+    fBreakPoint.Remove(addr);
+    listPaintBox.Repaint;
+    RefreshBreakPointList;
+  end;
+  SetEnablede;
+end;
+
+
+
+procedure TDebugForm.FormResize(Sender: TObject);
+begin
+  lwBreakPoint.Column[1].Width := lwBreakPoint.Width - lwBreakPoint.Column[0].Width - 4;
+end;
+
+procedure TDebugForm.lwBreakPointDblClick(Sender: TObject);
+var
+  iSel: integer;
+  vk: word;
+begin
+  Unselect;
+  CloseEdit;
+  iSel := lwBreakPoint.Selected.Index;
+  if iSel <> -1 then
+  begin
+    ListEdit.Text := lwBreakPoint.Items[isel].Caption;
+    EditState := ListAddrEditSt;
+    vk := VK_RETURN;
+    ListEditKeyDown(Sender, vk, []);
+  end;
+  SetEnablede;
+end;
+
+procedure TDebugForm.ppBreakPointPopup(Sender: TObject);
+begin
+  setenablede;
+end;
+
+
+procedure TDebugForm.AddEdBreakPoint();
 var
   i: integer;
-  UserString: string;
 begin
-  UserString := LoadBreakPoint;
-  if InputQuery('Breakpoint address', '', False, UserString) then
+  if BreakPointDialogForm.Execute then
   begin
-    i := GetValue(UserString, radix);
-    SaveBreakPoint(UserString);
-    Unselect;
-    CloseEdit;
-    BreakPoint := i;
-    CpuSteps := -1;
-    Hide;
+    i := GetValue(BreakPointDialogForm.leAddres.Text, radix);
+    fBreakPoint.AddOrSetValue(i, BreakPointDialogForm.leRem.Text);
+    listPaintBox.Repaint;
+    RefreshBreakPointList;
   end;
 end;
 
+procedure TDebugForm.aAddBreakPointExecute(Sender: TObject);
+begin
+  Unselect;
+  CloseEdit;
+  BreakPointDialogForm.leAddres.Text := inttohex(ListAddr, 4);
+  BreakPointDialogForm.leRem.Text := GetRem(ListAddr);
+  if InBreakPoint(ListAddr) then
+    BreakPointDialogForm.leRem.Text := GetRemBreakPoint(ListAddr);
+  AddEdBreakPoint();
+  SetEnablede;
+end;
 
 
 procedure TDebugForm.aByteWordToogleExecute(Sender: TObject);
@@ -416,14 +504,21 @@ begin
   Unselect;
   gbBinEditor.Font.Color := SELECTED;
   CloseEdit;
+  SetEnablede;
 end;
 
 procedure TDebugForm.aStepExecute(Sender: TObject);
 begin
   CpuRun;
   SetListBoundaries(ptrw(@reg[R7])^);
+  // В случае анимации, если попали на точку останова - остановимся
+  if autorun and InBreakPoint(ptrw(@reg[R7])^) then
+  begin
+    aAnimate.Execute;
+  end;
   Unselect;
   CloseEdit;
+  SetEnablede;
 end;
 
 
@@ -473,7 +568,7 @@ begin
   begin
     EditState := ListAddrEditSt;
     EditAddr := ListAddr;
-    Col := 0;
+    Col := 1;
     w := wordwidth;
     ListEdit.CharCase := ecUpperCase;
   end
@@ -493,7 +588,7 @@ begin
     end {while};
     EditAddr := loc;
     EditState := ListInstrEditSt;
-    Col := wordwidth + 2+8;
+    Col := wordwidth + 2 + 9;
     w := cols - wordwidth - 2;
     ListEdit.CharCase := ecNormal;
   end
@@ -566,6 +661,19 @@ begin
     Result := Rem[addr];
 end;
 
+// признак того, что адрес участует в точках останова
+function TDebugForm.InBreakPoint(const v_addr: word): boolean;
+begin
+  Result := fBreakPoint.ContainsKey(v_addr);
+end;
+
+function TDebugForm.GetRemBreakPoint(const addr: integer): string;
+begin
+  Result := '';
+  if fBreakPoint.ContainsKey(addr) then
+    Result := fBreakPoint[addr];
+end;
+
 
 procedure TDebugForm.ListPaintBoxPaint(Sender: TObject);
 var
@@ -591,18 +699,31 @@ begin
     for i := 0 to rows - 1 do
     begin
       if (loc > ListEndAddr) or ((not loc and ListAddr) >= $8000) {wrapped?} then break;
-      TextOut(0, i * cy, WordToStr(loc, '0') + ':');
-      TextOut(6 * cx, i * cy, OctStr(loc, 6) + ':');
+      ListPaintBox.Canvas.Font.Color := clBlack;
 
-      rm := GetRem(loc);
+      if InBreakPoint(loc) then
+      begin
+        ListPaintBox.Canvas.Font.Color := clRed;
+        TextOut(0 * cx, i * cy, '*');
+      end;
+
+      //      ListPaintBox.Canvas.Font.Color := clBlack;
+      TextOut(1 * cx, i * cy, WordToStr(loc, '0') + ':');
+      TextOut(7 * cx, i * cy, OctStr(loc, 6) + ':');
+
+      if InBreakPoint(loc) then
+        rm := GetRemBreakPoint(loc)
+      else
+        rm := GetRem(loc);
+
       opcode := FetchWord;
       index := ScanMnemTab(opcode);
       if (opcode and $8000) = 0 then c := ' '
       else
         c := 'b';
-      TextOut(14 * cx, i * cy, Mnemonic(index, c));
-      TextOut(22 * cx, i * cy, Arguments(index, opcode));
-      TextOut(40 * cx, i * cy, rm);
+      TextOut(15 * cx, i * cy, Mnemonic(index, c));
+      TextOut(23 * cx, i * cy, Arguments(index, opcode));
+      TextOut(42 * cx, i * cy, rm);
 
     end {for};
   end {with};
@@ -970,26 +1091,8 @@ begin
   end {with};
 end;
 
-
-procedure TDebugForm.BinRadioButtonClick(Sender: TObject);
-begin
-
-end;
-
-
-
 { MACHINE CODE EXECUTION CONTROL }
 
-procedure TDebugForm.StepPanelClick(Sender: TObject);
-begin
-  Unselect;
-  CloseEdit;
-end;
-
-
-procedure TDebugForm.StepButtonClick(Sender: TObject);
-begin
-end;
 
 procedure TDebugForm.AutoRunTimerTimer(Sender: TObject);
 begin
@@ -1001,15 +1104,11 @@ begin
   AutoRunTimer.Enabled := autorun;
 end;
 
-
 procedure TDebugForm.TracePanelClick(Sender: TObject);
 begin
   Unselect;
   CloseEdit;
 end;
-
-
-
 
 procedure TDebugForm.BpPanelClick(Sender: TObject);
 begin
@@ -1018,19 +1117,70 @@ begin
 end;
 
 
-procedure TDebugForm.BpButtonClick(Sender: TObject);
-
+// если тут возвращать имя загруженного файла то точки останова можно привязать к конкретному ROM
+function TDebugForm.GetSectionForBreakPoint: string;
 begin
+  Result := 'BreakPoints';
+end;
 
+procedure TDebugForm.SaveBreakPoint;
+var
+  addr: word;
+  IniMK: TIniFile;
+  r: integer;
+begin
+  IniMK := TIniFile.Create(ExpandFileName(IniName));
+  iniMk.EraseSection(GetSectionForBreakPoint);
+  r := 0;
+  for addr in fBreakPoint.Keys do
+  begin
+    iniMk.WriteInteger(GetSectionForBreakPoint, 'Addres' + IntToStr(r), addr);
+    iniMk.WriteString(GetSectionForBreakPoint, 'Rem' + IntToStr(r), fBreakPoint[addr]);
+    Inc(r);
+  end;
+  FreeAndNil(IniMK);
 end;
 
 
-procedure TDebugForm.BpEditChange(Sender: TObject);
+procedure TDebugForm.LoadreakPoint;
+var
+  r: integer;
+  IniMK: TIniFile;
+  addres: word;
+  rm: string;
 begin
-
+  fBreakPoint.Clear;
+  IniMK := TIniFile.Create(ExpandFileName(IniName));
+  r := 0;
+  while iniMk.ValueExists(GetSectionForBreakPoint, 'Addres' + IntToStr(r)) do
+  begin
+    addres := iniMk.ReadInteger(GetSectionForBreakPoint, 'Addres' + IntToStr(r), 0);
+    rm := iniMk.ReadString(GetSectionForBreakPoint, 'Rem' + IntToStr(r), '');
+    fBreakPoint.AddOrSetValue(addres, rm);
+    Inc(r);
+  end;
+  FreeAndNil(IniMK);
 end;
 
 
+procedure TDebugForm.RefreshBreakPointList;
+var
+  addr: word;
+  rm: string;
+  item: TListItem;
+begin
+  lwBreakPoint.BeginUpdate;
+  lwBreakPoint.Items.Clear;
+  for addr in fBreakPoint.Keys do
+  begin
+    rm := fBreakPoint[addr];
+    item := TListItem.Create(lwBreakPoint.Items);
+    item.Caption := inttohex(addr, 4);
+    item.Subitems.Add(rm);
+    lwBreakPoint.Items.AddItem(item);
+  end;
+  lwBreakPoint.EndUpdate;
+end;
 
 { GENERAL FORM EVENTS }
 
@@ -1052,6 +1202,9 @@ begin
   aOldReg[7] := '';
   aOldReg[8] := '';
 
+  fBreakPoint := TBreakPointDictionary.Create;
+  LoadreakPoint;
+  RefreshBreakPointList;
 
   Rem := nil;
   autorun := False;
@@ -1068,7 +1221,6 @@ end;
 
 
 procedure TDebugForm.DebugShow(Sender: TObject);
-
 var
   IniMK: TIniFile;
 begin
@@ -1082,14 +1234,14 @@ begin
     Width := ReadInteger('Debugger', 'Width', Width);
     Height := ReadInteger('Debugger', 'Height', Height);
   end {with};
-  IniMK.Free;
+  FreeAndNil(IniMK);
 
   autorun := False;
   AutoRunTimerTimer(Sender);
 
   CpuStop := True;
   CpuSteps := -1;
-  BreakPoint := -1;
+
   SetListBoundaries(ptrw(@reg[R7])^);
   ListEdit.SetFocus;
   Unselect;
@@ -1119,5 +1271,13 @@ begin
   CpuStop := False;
 end;
 
+
+procedure TDebugForm.SetEnablede;
+begin
+  aEditBreakPoint.Enabled := (lwBreakPoint.SelCount = 1) and not autorun;
+  aDeleteBreakPoint.Enabled := (lwBreakPoint.SelCount = 1) and not autorun;
+  aAddBreakPoint.Enabled := not autorun;
+  aRunForBreakPoint.Enabled :=  not autorun;
+end;
 
 end.

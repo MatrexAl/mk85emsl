@@ -92,7 +92,6 @@ interface
 				  prevents the program from crashing when the
 				  Debug Window was made visible too early }
     CpuSteps: integer;		{ ignored when < 0 }
-    BreakPoint: integer;	{ ignored when < 0 }
     loc: word; 			{ address of the resource }
 
 

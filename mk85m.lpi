@@ -40,7 +40,7 @@
         <PackageName Value="LCL"/>
       </Item2>
     </RequiredPackages>
-    <Units Count="14">
+    <Units Count="15">
       <Unit0>
         <Filename Value="mk85m.dpr"/>
         <IsPartOfProject Value="True"/>
@@ -111,6 +111,14 @@
         <Filename Value="asm2rom.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit13>
+      <Unit14>
+        <Filename Value="brakpointdialog.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="BreakPointDialogForm"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="BrakPointDialog"/>
+      </Unit14>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
